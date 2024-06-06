@@ -8,26 +8,23 @@ from datetime import datetime
 
 class City(BaseModel):
     """Represents a city"""
-    def __init__(self, name, country_id):
-        """initialize a new country"""
+    def __init__(self, name, country):
+        """initialize a new city"""
         super().__init__()
         self.id = uuid.uuid4()
         self.name = name
-        self.country_id = country_id
+        self.country_id = country.id
+        self.country = country
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
+        self.places = []
 
-    def operation1(self, params):
-        """Sample operation1 method"""
-        return type(params)
+    def add_place(self, place):
+         """Add a place to the city"""
+         if place not in self.places:
+             self.places.append(place)
+             self.updated_at = datetime.now()
 
-    def operation2(self, params):
-        """Sample operation2 method"""
-        pass
-
-    def save (self):
-        """Update updated_at and simulate saving to a database"""
-        self.updated_at = datetime.now()
-        pass
-
-
+    def get_place(self):
+        """Get all places in the city"""
+        return self.places
