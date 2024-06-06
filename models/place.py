@@ -2,17 +2,19 @@
 """
 This module contains classes representing model base.
 """
+import uuid
 # models/place.py
 from datetime import datetime
 
 class Place:
-    def __init__(self, id, name, description, price, user_id, city_id):
-        self.id = id
+    def __init__(self, name, description, price, user, city):
+        self.id = str(uuid.uuid4())
         self.name = name
         self.description = description
         self.price = price
-        self.user_id = user_id
-        self.city_id = city_id
+        self.user_id = user
+        self.city_id = city.id
+        self.city = city
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.amenities = []
@@ -29,3 +31,8 @@ class Place:
     def add_review(self, review):
         self.reviews.append(review)
         self.updated_at = datetime.now()
+
+    def save(self):
+        """Update updated_at and simulate saving to a database"""
+        self.updated_at = datetime.now()
+        pass

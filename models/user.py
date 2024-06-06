@@ -4,9 +4,13 @@ from base_model import BaseModel
 
 
 class User(BaseModel):
+    users = {}
+
     def __init__(self, email, password, first_name, last_name):
         """Initialize a new User instance"""
         super().__init__()
+        if email in User.users:
+            raise ValueError("Email already in use")
         self.email = email
         self.password = password
         self.first_name = first_name
