@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from models.place import Place
-from persistence.file_storage import FileStorage
+from Persistence .file_storage import FileStorage
 
 app = Flask(__name__)
 storage = FileStorage()
