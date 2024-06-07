@@ -1,0 +1,24 @@
+# hbnb_evolution/tests/test_data_manager.py
+
+import unittest
+from persistence.data_manager import DataManager
+from storage import FileStorage  # Adjust this import based on your storage implementation
+
+class TestDataManagement(unittest.TestCase):
+    def setUp(self):
+        self.data_manager = DataManager(FileStorage())
+
+    def test_save_and_get(self):
+        # Write test cases for save and get methods
+        pass
+
+    def test_update(self):
+        # Write test cases for update method
+        pass
+
+    def test_delete(self):
+        # Write test cases for delete method
+        pass
+
+if __name__ == '__main__':
+    unittest.main()
