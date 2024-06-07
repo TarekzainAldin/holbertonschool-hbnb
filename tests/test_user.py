@@ -10,6 +10,12 @@ class TestUser(unittest.TestCase):
         self.assertEqual(user.first_name,"First".capitalize().strip())
         self.assertEqual(user.last_name,"Last".capitalize().strip())
 
+    def test_unique_email(self):
+        User(email="unique@example.com", password="password", first_name="Jane", last_name="Doe")
+        with self.assertRaises(ValueError):
+            User(email="unique@example.com", password="password", first_name="Jane", last_name="Doe")
+
+            
         if __name__ == "__name__":
             unittest.main()
 
