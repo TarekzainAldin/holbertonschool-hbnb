@@ -1,9 +1,9 @@
 import unittest
-import sys
-import os
+
 from app import app
 from models.user import User
 from persistence import FileStorage
+
 
 class UserTestCase(unittest.TestCase):
     def setUp(self):
@@ -44,6 +44,9 @@ class UserTestCase(unittest.TestCase):
         self.storage.save(user)
         response = self.app.delete(f'/api/users/{user.id}')
         self.assertEqual(response.status_code, 204)
+
+
+
 
 if __name__ == '__main__':
     unittest.main()

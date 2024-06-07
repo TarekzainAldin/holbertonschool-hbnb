@@ -2,9 +2,10 @@
 
 
 import unittest
-from persistence.data_manager import DataManager
+from persistence import DataManager
 from models.user import User
 from models.place import Place
+
 # Add other imports as necessary
 
 class TestDataManager(unittest.TestCase):
