@@ -1,6 +1,8 @@
 from datetime import datetime
+from.base_model import BaseModel
 
-class Review:
+
+class Review(BaseModel):
     def __init__(self, review_id, user_id, place_id, rating, comment):
         self.review_id = review_id
         self.user_id = user_id
