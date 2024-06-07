@@ -1,4 +1,4 @@
-# hbnb_evolution/persistence/persistence_manager.py
+
 
 from abc import ABC, abstractmethod
 

@@ -1,7 +1,9 @@
 import unittest
+import sys
+import os
 from app import app
 from models.user import User
-from persistence.file_storage import FileStorage
+from persistence import FileStorage
 
 class UserTestCase(unittest.TestCase):
     def setUp(self):
