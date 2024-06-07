@@ -1,42 +1,44 @@
 import unittest
-from models.city import City
+from unittest.mock import patch
+from models.city  import City
 
 class TestCity(unittest.TestCase):
-    def test_city_creation(self):
-        city = City(name="laval ", country_id="country1")
-        self.assertIsInstance(city.id, str)
+    @patch('city.json.load')
+    def test_city_creation(self, mock_json_load):
+        # Mock the json.load function to return sample JSON data
+        mock_json_load.return_value = {
+            "id": "1",
+            "name": "New York",
+            "country_id": "country1",
+            "created_at": "2024-06-07T12:00:00",
+            "updated_at": "2024-06-07T12:00:00",
+            "places": []
+        }
+
+        # Create a city object for testing
+        city = City.from_json("test_city.json")
+
+        # Check if the city object is created correctly
         self.assertEqual(city.name, "New York")
+        self.assertEqual(city.country_id, "country1")
+
+    @patch('city.json.dump')
+    def test_save_to_json(self, mock_json_dump):
+        # Create a city object for testing
+        city = City(name="Test City", country_id="country1")
+
+        # Save the city object to a JSON file
+        city.save_to_json("test_city.json")
+
+        # Check if the json.dump function is called with the expected arguments
+        mock_json_dump.assert_called_once_with({
+            "id": city.id,
+            "name": "Test City",
+            "country_id": "country1",
+            "created_at": city.created_at.isoformat(),
+            "updated_at": city.updated_at.isoformat(),
+            "places": []
+        }, "test_city.json")
 
 if __name__ == "__main__":
     unittest.main()
-
-
-# #!/usr/bin/python3
-# import unittest
-# import uuid
-# from models.city import City
-# from datetime import datetime
-
-# class TestCity(unittest.TestCase):
-#     def setUp(self):
-#         self.country_id = str(uuid.uuid4())
-#         self.city = City(name="Test City", country_id=self.country_id)
-
-#     def test_city_creation(self):
-#         self.assertEqual(self.city.name, "Test City")
-#         self.assertEqual(self.city.country_id, self.country_id)
-#         self.assertIsInstance(self.city.id, str)
-#         self.assertIsInstance(self.city.created_at, datetime)
-#         self.assertIsInstance(self.city.updated_at, datetime)
-
-#     def test_city_operations(self):
-#         self.assertEqual(self.city.operation1("example"), str)
-#         # Add assertions based on the expected outcome of operation2
-
-#     def test_save_method(self):
-#         old_updated_at = self.city.updated_at
-#         self.city.save()
-#         self.assertNotEqual(self.city.updated_at, old_updated_at)
-
-# if __name__ == '__main__':
-#     unittest.main()
