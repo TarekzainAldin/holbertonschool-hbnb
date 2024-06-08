@@ -18,6 +18,6 @@ class TestUser(unittest.TestCase):
         self.assertEqual(user.places[0], "New Place")
 
     # Add more tests for other methods and business logic
-
+    
 if __name__ == '__main__':
     unittest.main()

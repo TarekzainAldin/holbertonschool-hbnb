@@ -1,6 +1,6 @@
-# hbnb_evolution/persistence/data_manager.py
 
-from persistence_manager import IPersistenceManager
+
+from persistence import IPersistenceManager
 
 class DataManager(IPersistenceManager):
     def __init__(self, storage):
