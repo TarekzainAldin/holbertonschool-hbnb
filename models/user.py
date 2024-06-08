@@ -1,28 +1,20 @@
-#!/usr/bin/python3
-"""Define user class"""
-from base_model import BaseModel
+from datetime import datetime
 
-
-class User(BaseModel):
-    users = {}
-
-    def __init__(self, email, password, first_name, last_name):
-        """Initialize a new User instance"""
-        super().__init__()
-        if email in User.users:
-            raise ValueError("Email already in use")
+class User:
+    def __init__(self, email, first_name, last_name):
         self.email = email
-        self.password = password
         self.first_name = first_name
         self.last_name = last_name
+        self.places = []  # List to hold the places owned by the user
+        self.reviews = []  # List to hold the reviews written by the user
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
 
-    def to_dict(self):
-        """Return the dictionary of the User instance, including inherited attributes"""
-        user_dict = super().to_dict()
-        user_dict.update({
-            'email': self.email,
-            'password': self.password,
-            'first_name': self.first_name,
-            'last_name': self.last_name
-        })
-        return user_dict
+    def add_place(self, place):
+        self.places.append(place)
+
+    def add_review(self, review):
+        self.reviews.append(review)
+
+    def __repr__(self):
+        return f"User(email='{self.email}', first_name='{self.first_name}', last_name='{self.last_name}')"
