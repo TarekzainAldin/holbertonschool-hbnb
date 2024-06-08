@@ -1,38 +1,35 @@
-#!/usr/bin/env python3
-"""
-This module contains classes representing model base.
-"""
-import uuid
-# models/place.py
 from datetime import datetime
 
 class Place:
-    def __init__(self, name, description, price, user, city):
-        self.id = str(uuid.uuid4())
+    def __init__(self, name, description, address, city_id, latitude, longitude, host_id, 
+                 number_of_rooms, number_of_bathrooms, price_per_night, max_guests):
         self.name = name
         self.description = description
-        self.price = price
-        self.user_id = user
-        self.city_id = city.id
-        self.city = city
+        self.address = address
+        self.city_id = city_id
+        self.latitude = latitude
+        self.longitude = longitude
+        self.host_id = host_id
+        self.number_of_rooms = number_of_rooms
+        self.number_of_bathrooms = number_of_bathrooms
+        self.price_per_night = price_per_night
+        self.max_guests = max_guests
+        self.amenities = []  # List to hold Amenity objects
+        self.reviews = []  # List to hold Review objects
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
-        self.amenities = []
-        self.reviews = []
 
     def add_amenity(self, amenity):
-        if amenity not in self.amenities:
-            self.amenities.append(amenity)
-            self.updated_at = datetime.now()
-
-    def get_reviews(self):
-        return self.reviews
+        self.amenities.append(amenity)
 
     def add_review(self, review):
         self.reviews.append(review)
-        self.updated_at = datetime.now()
 
-    def save(self):
-        """Update updated_at and simulate saving to a database"""
-        self.updated_at = datetime.now()
-        pass
+    def __repr__(self):
+        return f"Place(name='{self.name}', city_id='{self.city_id}', host_id='{self.host_id}')"
+
+    def set_host(self, host):
+        if not isinstance(host, User):
+            raise ValueError("Host must be a User object")
+        self.host_id = host.email
+        
