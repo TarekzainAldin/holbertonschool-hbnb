@@ -1,26 +1,44 @@
+from models.user import User
 from persistence.IPersistenceManager import IPersistenceManager
 
 class DataManager(IPersistenceManager):
     def __init__(self):
-        self.data = {}  # Data storage dictionary
+        self.users = []  # Data storage list for users
 
     def save(self, entity):
-        entity_id = entity.email  # Assuming email as the unique identifier
-        self.data[entity_id] = entity
+        # Save a user entity
+        if isinstance(entity, User):
+            # Generate user ID (Assuming email as the unique identifier)
+            user_id = len(self.users) + 1
+            entity.id = user_id
+            self.users.append(entity)
+            return {'id': user_id}  # Return the ID of the newly created user
+        else:
+            raise TypeError("Entity must be an instance of User.")
 
     def get(self, entity_id, entity_type):
-        return self.data.get(entity_id)
+        # Get a user by ID
+        if entity_type == 'user':
+            for user in self.users:
+                if user.id == entity_id:
+                    return user
+        return None
 
     def update(self, entity):
-        # Update the entity if it exists in the data storage
-        entity_id = entity.email
-        if entity_id in self.data:
-            self.data[entity_id] = entity
-        else:
-            raise ValueError(f"Entity with ID '{entity_id}' does not exist.")
+        # Update a user entity
+        if isinstance(entity, User):
+            user_id = entity.id
+            for idx, user in enumerate(self.users):
+                if user.id == user_id:
+                    self.users[idx] = entity
+                    return True
+        return False
 
     def delete(self, entity_id, entity_type):
-        if entity_id in self.data:
-            del self.data[entity_id]
-        else:
-            raise ValueError(f"Entity with ID '{entity_id}' does not exist.")
+        # Delete a user by ID
+        if entity_type == 'user':
+            for user in self.users:
+                if user.id == entity_id:
+                    self.users.remove(user)
+                    return True
+        return False

@@ -5,9 +5,12 @@ app = Flask(__name__)
 
 # Dummy user data
 users = []
+user_id_counter = 1  # Counter for assigning user IDs
 
 @app.route('/users', methods=['POST'])
 def create_user():
+    global user_id_counter
+
     data = request.get_json()
     if not data:
         return jsonify({'error': 'No data provided'}), 400
@@ -25,10 +28,15 @@ def create_user():
 
     # Create a new user
     user = User(email=email, first_name=data['first_name'], last_name=data['last_name'])
+    user.id = user_id_counter
+    user_id_counter += 1
     users.append(user)
-    user.id = len(users)  # Assign an ID to the user
 
     return jsonify({'message': 'User created successfully', 'user': user.__dict__}), 201
+
+# Other endpoints remain the same...
+
+
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -51,6 +59,13 @@ def update_user(user_id):
     if not user:
         return jsonify({'error': 'User not found'}), 404
 
+    # Validate required fields
+    if 'email' in data and ('@' not in data['email'] or '.' not in data['email']):
+        return jsonify({'error': 'Invalid email format'}), 400
+
+    if 'email' in data and data['email'] != user.email and any(u.email == data['email'] for u in users):
+        return jsonify({'error': 'Email already exists'}), 409
+
     # Update user data
     if 'email' in data:
         user.email = data['email']
@@ -68,7 +83,7 @@ def delete_user(user_id):
         return jsonify({'error': 'User not found'}), 404
 
     users.remove(user)
-    return '', 204
+    return jsonify({'message': 'User deleted successfully'}), 204
 
 if __name__ == '__main__':
     app.run(debug=True)
