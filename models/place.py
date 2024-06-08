@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from models.user import User
+
 class Place:
     def __init__(self, name, description, address, city_id, latitude, longitude, host_id, 
                  number_of_rooms, number_of_bathrooms, price_per_night, max_guests):
@@ -32,4 +34,3 @@ class Place:
         if not isinstance(host, User):
             raise ValueError("Host must be a User object")
         self.host_id = host.email
-        
