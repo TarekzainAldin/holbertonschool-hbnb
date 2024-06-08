@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """Define city class"""
 import json 
-from  base_model import BaseModel
+from base_model import BaseModel
 import uuid
 from datetime import datetime
 

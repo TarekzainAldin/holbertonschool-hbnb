@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from models.city  import City
+from models.city import City
 
 class TestCity(unittest.TestCase):
     @patch('city.json.load')

@@ -1,3 +1,4 @@
+# tests/test_user.py
 import unittest
 from datetime import datetime
 from models.user import User
@@ -18,6 +19,6 @@ class TestUser(unittest.TestCase):
         self.assertEqual(user.places[0], "New Place")
 
     # Add more tests for other methods and business logic
-    
+
 if __name__ == '__main__':
     unittest.main()
