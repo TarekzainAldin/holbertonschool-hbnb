@@ -1,89 +1,98 @@
 from flask import Flask, jsonify, request
+from flask_restx import Api, Resource, fields
 from models.user import User
+from persistence.data_manager import DataManager
 
 app = Flask(__name__)
+api = Api(app, doc='/docs')
+data_manager = DataManager()
 
-# Dummy user data
-users = []
-user_id_counter = 1  # Counter for assigning user IDs
+user_model = api.model('User', {
+    'email': fields.String(required=True, description='User email'),
+    'first_name': fields.String(required=True, description='First name'),
+    'last_name': fields.String(required=True, description='Last name')
+})
 
-@app.route('/users', methods=['POST'])
-def create_user():
-    global user_id_counter
+@api.route('/users')
+class UserList(Resource):
+    @api.marshal_list_with(user_model)
+    def get(self):
+        return [user.to_dict() for user in data_manager.get_all_users()]
 
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
+    @api.expect(user_model)
+    @api.response(201, 'User created successfully')
+    @api.response(400, 'Invalid input')
+    @api.response(409, 'Email already exists')
+    def post(self):
+        data = request.get_json()
+        if not data:
+            api.abort(400, 'No data provided')
+        email = data.get('email')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        if not email or '@' not in email or '.' not in email:
+            api.abort(400, 'Invalid email format')
+        if not first_name or not isinstance(first_name, str):
+            api.abort(400, 'Invalid first name')
+        if not last_name or not isinstance(last_name, str):
+            api.abort(400, 'Invalid last name')
+        if data_manager.get_user_by_email(email):
+            api.abort(409, 'Email already exists')
+        user = User(email=email, first_name=first_name, last_name=last_name)
+        data_manager.save_user(user)
+        return {'message': 'User created successfully', 'user': user.to_dict()}, 201
 
-    # Validate required fields
-    if 'email' not in data or 'first_name' not in data or 'last_name' not in data:
-        return jsonify({'error': 'Missing required fields'}), 400
+@api.route('/users/<int:user_id>')
+class UserDetail(Resource):
+    @api.marshal_with(user_model)
+    @api.response(200, 'Success')
+    @api.response(404, 'User not found')
+    def get(self, user_id):
+        user = data_manager.get_user(user_id)
+        if not user:
+            api.abort(404, 'User not found')
+        return user.to_dict()
 
-    email = data['email']
-    if not email or '@' not in email or '.' not in email:
-        return jsonify({'error': 'Invalid email format'}), 400
+    @api.expect(user_model)
+    @api.response(200, 'User updated successfully')
+    @api.response(400, 'Invalid input')
+    @api.response(404, 'User not found')
+    @api.response(409, 'Email already exists')
+    def put(self, user_id):
+        data = request.get_json()
+        if not data:
+            api.abort(400, 'No data provided')
+        user = data_manager.get_user(user_id)
+        if not user:
+            api.abort(404, 'User not found')
+        email = data.get('email')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        if email:
+            if '@' not in email or '.' not in email:
+                api.abort(400, 'Invalid email format')
+            if data_manager.get_user_by_email(email) and data_manager.get_user_by_email(email).id != user_id:
+                api.abort(409, 'Email already exists')
+            user.email = email
+        if first_name:
+            if not isinstance(first_name, str):
+                api.abort(400, 'Invalid first name')
+            user.first_name = first_name
+        if last_name:
+            if not isinstance(last_name, str):
+                api.abort(400, 'Invalid last name')
+            user.last_name = last_name
+        data_manager.update_user(user)
+        return {'message': 'User updated successfully', 'user': user.to_dict()}
 
-    if any(user.email == email for user in users):
-        return jsonify({'error': 'Email already exists'}), 409
-
-    # Create a new user
-    user = User(email=email, first_name=data['first_name'], last_name=data['last_name'])
-    user.id = user_id_counter
-    user_id_counter += 1
-    users.append(user)
-
-    return jsonify({'message': 'User created successfully', 'user': user.__dict__}), 201
-
-# Other endpoints remain the same...
-
-
-
-@app.route('/users', methods=['GET'])
-def get_users():
-    return jsonify({'users': [user.__dict__ for user in users]}), 200
-
-@app.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    user = next((user for user in users if user.id == user_id), None)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    return jsonify({'user': user.__dict__}), 200
-
-@app.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'No data provided'}), 400
-
-    user = next((user for user in users if user.id == user_id), None)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-
-    # Validate required fields
-    if 'email' in data and ('@' not in data['email'] or '.' not in data['email']):
-        return jsonify({'error': 'Invalid email format'}), 400
-
-    if 'email' in data and data['email'] != user.email and any(u.email == data['email'] for u in users):
-        return jsonify({'error': 'Email already exists'}), 409
-
-    # Update user data
-    if 'email' in data:
-        user.email = data['email']
-    if 'first_name' in data:
-        user.first_name = data['first_name']
-    if 'last_name' in data:
-        user.last_name = data['last_name']
-
-    return jsonify({'message': 'User updated successfully', 'user': user.__dict__}), 200
-
-@app.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user = next((user for user in users if user.id == user_id), None)
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-
-    users.remove(user)
-    return jsonify({'message': 'User deleted successfully'}), 204
+    @api.response(204, 'User deleted successfully')
+    @api.response(404, 'User not found')
+    def delete(self, user_id):
+        user = data_manager.get_user(user_id)
+        if not user:
+            api.abort(404, 'User not found')
+        data_manager.delete_user(user_id)
+        return '', 204
 
 if __name__ == '__main__':
     app.run(debug=True)

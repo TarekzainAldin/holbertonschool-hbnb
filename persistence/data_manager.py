@@ -1,26 +1,57 @@
+from models.user import User
 from persistence.IPersistenceManager import IPersistenceManager
 
 class DataManager(IPersistenceManager):
     def __init__(self):
-        self.data = {}  # Data storage dictionary
+        self.data = {}  # Dictionary to store data by entity type
 
-    def save(self, entity):
-        entity_id = entity.email  # Assuming email as the unique identifier
-        self.data[entity_id] = entity
+    def save(self, entity_type, **entity_attributes):
+        """
+        Save an entity.
+        """
+        entity_class = globals().get(entity_type)
+        if not entity_class:
+            raise ValueError(f"Unknown entity type: {entity_type}")
+
+        if entity_type not in self.data:
+            self.data[entity_type] = []
+
+        entity_instance = entity_class(**entity_attributes)
+
+        entity_id = len(self.data[entity_type]) + 1
+        setattr(entity_instance, 'id', entity_id)
+        self.data[entity_type].append(entity_instance)
+        return {'id': entity_id}
 
     def get(self, entity_id, entity_type):
-        return self.data.get(entity_id)
+        """
+        Get an entity by ID.
+        """
+        if entity_type in self.data:
+            for entity in self.data[entity_type]:
+                if getattr(entity, 'id', None) == entity_id:
+                    return entity
+        return None
 
     def update(self, entity):
-        # Update the entity if it exists in the data storage
-        entity_id = entity.email
-        if entity_id in self.data:
-            self.data[entity_id] = entity
-        else:
-            raise ValueError(f"Entity with ID '{entity_id}' does not exist.")
+        """
+        Update an entity.
+        """
+        entity_type = type(entity).__name__
+        if entity_type in self.data:
+            for idx, e in enumerate(self.data[entity_type]):
+                if getattr(e, 'id', None) == getattr(entity, 'id', None):
+                    self.data[entity_type][idx] = entity
+                    return True
+        return False
 
     def delete(self, entity_id, entity_type):
-        if entity_id in self.data:
-            del self.data[entity_id]
-        else:
-            raise ValueError(f"Entity with ID '{entity_id}' does not exist.")
+        """
+        Delete an entity by ID.
+        """
+        if entity_type in self.data:
+            for idx, entity in enumerate(self.data[entity_type]):
+                if getattr(entity, 'id', None) == entity_id:
+                    del self.data[entity_type][idx]
+                    return True
+        return False
