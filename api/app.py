@@ -1,3 +1,9 @@
+import os
+import sys
+
+# Add the parent directory of 'api' to the sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from flask import Flask, jsonify, request
 from flask_restx import Api, Resource, fields
 from models.user import User
@@ -17,7 +23,7 @@ user_model = api.model('User', {
 class UserList(Resource):
     @api.marshal_list_with(user_model)
     def get(self):
-        return [user.to_dict() for user in data_manager.get_all_users()]
+        return [user.to_dict() for user in data_manager.users]
 
     @api.expect(user_model)
     @api.response(201, 'User created successfully')
@@ -36,10 +42,10 @@ class UserList(Resource):
             api.abort(400, 'Invalid first name')
         if not last_name or not isinstance(last_name, str):
             api.abort(400, 'Invalid last name')
-        if data_manager.get_user_by_email(email):
+        if any(user.email == email for user in data_manager.users):
             api.abort(409, 'Email already exists')
         user = User(email=email, first_name=first_name, last_name=last_name)
-        data_manager.save_user(user)
+        data_manager.save(user)
         return {'message': 'User created successfully', 'user': user.to_dict()}, 201
 
 @api.route('/users/<int:user_id>')
@@ -48,7 +54,7 @@ class UserDetail(Resource):
     @api.response(200, 'Success')
     @api.response(404, 'User not found')
     def get(self, user_id):
-        user = data_manager.get_user(user_id)
+        user = data_manager.get(user_id, 'user')
         if not user:
             api.abort(404, 'User not found')
         return user.to_dict()
@@ -62,7 +68,7 @@ class UserDetail(Resource):
         data = request.get_json()
         if not data:
             api.abort(400, 'No data provided')
-        user = data_manager.get_user(user_id)
+        user = data_manager.get(user_id, 'user')
         if not user:
             api.abort(404, 'User not found')
         email = data.get('email')
@@ -71,7 +77,7 @@ class UserDetail(Resource):
         if email:
             if '@' not in email or '.' not in email:
                 api.abort(400, 'Invalid email format')
-            if data_manager.get_user_by_email(email) and data_manager.get_user_by_email(email).id != user_id:
+            if any(u.email == email and u.id != user_id for u in data_manager.users):
                 api.abort(409, 'Email already exists')
             user.email = email
         if first_name:
@@ -82,16 +88,16 @@ class UserDetail(Resource):
             if not isinstance(last_name, str):
                 api.abort(400, 'Invalid last name')
             user.last_name = last_name
-        data_manager.update_user(user)
+        data_manager.update(user)
         return {'message': 'User updated successfully', 'user': user.to_dict()}
 
     @api.response(204, 'User deleted successfully')
     @api.response(404, 'User not found')
     def delete(self, user_id):
-        user = data_manager.get_user(user_id)
+        user = data_manager.get(user_id, 'user')
         if not user:
             api.abort(404, 'User not found')
-        data_manager.delete_user(user_id)
+        data_manager.delete(user_id, 'user')
         return '', 204
 
 if __name__ == '__main__':

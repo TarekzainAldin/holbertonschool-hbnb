@@ -13,6 +13,10 @@ class BaseModel:
         self.updated_at = datetime.now()
 
     def to_dict(self):
-        return self.__dict__
+        return {
+            'id': self.id,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat()
+        }
     
         

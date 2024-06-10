@@ -1,3 +1,5 @@
+# persistence/data_manager.py
+
 from models.user import User
 from persistence.IPersistenceManager import IPersistenceManager
 
@@ -5,22 +7,17 @@ class DataManager(IPersistenceManager):
     def __init__(self):
         self.data = {}  # Dictionary to store data by entity type
 
-    def save(self, entity_type, **entity_attributes):
+    def save(self, entity):
         """
         Save an entity.
         """
-        entity_class = globals().get(entity_type)
-        if not entity_class:
-            raise ValueError(f"Unknown entity type: {entity_type}")
-
+        entity_type = type(entity).__name__
         if entity_type not in self.data:
             self.data[entity_type] = []
 
-        entity_instance = entity_class(**entity_attributes)
-
         entity_id = len(self.data[entity_type]) + 1
-        setattr(entity_instance, 'id', entity_id)
-        self.data[entity_type].append(entity_instance)
+        setattr(entity, 'id', entity_id)
+        self.data[entity_type].append(entity)
         return {'id': entity_id}
 
     def get(self, entity_id, entity_type):

@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Define Coutnry class"""
-from base_model import BaseModel
+from .base_model import BaseModel
 
 
 class Country(BaseModel):

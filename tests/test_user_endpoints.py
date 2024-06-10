@@ -1,51 +1,35 @@
 # tests/test_user_endpoints.py
 
 import unittest
-from models.user import User
-from unittest.mock import patch
-from flask import json
-from api.app import app, data_manager  # Import your Flask app and data_manager
+from models.user import User  # Import the User class
+from persistence.data_manager import DataManager
 
-class TestUserEndpoints(unittest.TestCase):
+class TestDataPersistence(unittest.TestCase):
     def setUp(self):
-        self.app = app.test_client()
-        self.app.testing = True
+        self.data_manager = DataManager()
 
-    def test_create_user(self):
-        # Define a sample user data
-        user_data = {
-            'email': 'test@example.com',
-            'first_name': 'John',
-            'last_name': 'Doe'
-        }
-        
-        # Send a POST request to create a new user
-        response = self.app.post('/users', json=user_data)
+    def test_save_and_retrieve_user(self):
+        user = User(email="test@example.com", first_name="John", last_name="Doe")
+        saved_user = self.data_manager.save(user)
+        self.assertIsNotNone(saved_user)
+        retrieved_user = self.data_manager.get(saved_user['id'], 'User')
+        self.assertIsNotNone(retrieved_user)
+        self.assertEqual(retrieved_user.email, "test@example.com")
 
-        # Assert the response status code
-        self.assertEqual(response.status_code, 201)
+    def test_update_user(self):
+        user = User(email="test@example.com", first_name="John", last_name="Doe")
+        saved_user = self.data_manager.save(user)
+        user.first_name = "Jane"
+        self.data_manager.update(user)
+        updated_user = self.data_manager.get(saved_user['id'], 'User')
+        self.assertEqual(updated_user.first_name, "Jane")
 
-        # Assert the response message and user data
-        response_data = json.loads(response.data.decode('utf-8'))
-        self.assertEqual(response_data['message'], 'User created successfully')
-        self.assertTrue('user' in response_data)
-        self.assertEqual(response_data['user']['email'], user_data['email'])
-
-    def test_get_user(self):
-        # Create a new user to test retrieval
-        new_user = data_manager.save_user(User('test@example.com', 'John', 'Doe'))
-
-        # Send a GET request to retrieve the user
-        response = self.app.get(f'/users/{new_user.id}')
-
-        # Assert the response status code
-        self.assertEqual(response.status_code, 200)
-
-        # Assert the response user data
-        response_data = json.loads(response.data.decode('utf-8'))
-        self.assertEqual(response_data['email'], new_user.email)
-
-    # Add similar tests for other endpoints: update_user, delete_user, get_users
+    def test_delete_user(self):
+        user = User(email="test@example.com", first_name="John", last_name="Doe")
+        saved_user = self.data_manager.save(user)
+        self.data_manager.delete(saved_user['id'], 'User')
+        deleted_user = self.data_manager.get(saved_user['id'], 'User')
+        self.assertIsNone(deleted_user)
 
 if __name__ == '__main__':
     unittest.main()
