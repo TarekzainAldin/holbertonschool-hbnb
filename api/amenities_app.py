@@ -1,91 +1,99 @@
-#!/usr/bin/python3
-from flask import Flask, jsonify, request
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from flask_restx import Api, Resource, fields
 from datetime import datetime
 
 app = Flask(__name__)
-api = Api(app, version='1.0', title='Amenity API',
-          description='A simple Amenity Management API')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///amenities.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-ns = api.namespace('amenities', description='Amenity operations')
+db = SQLAlchemy(app)
+api = Api(app, version='1.0', title='Amenity Management API', description='A simple Amenity Management API')
 
-# In-memory storage
-amenities = []
-amenity_counter = 1
+# Initialize Flask-Restx Namespace
+ns = api.namespace('amenities', description='Amenities operations')
 
-# Flask-Restx model
+class Amenity(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<Amenity {self.name}>'
+
+db.create_all()
+
+# Define the expected model for POST and PUT requests
 amenity_model = api.model('Amenity', {
     'name': fields.String(required=True, description='The amenity name')
-})
-
-amenity_response_model = api.model('AmenityResponse', {
-    'id': fields.Integer(readonly=True, description='The unique identifier'),
-    'name': fields.String(required=True, description='The amenity name'),
-    'created_at': fields.DateTime(description='Creation timestamp'),
-    'updated_at': fields.DateTime(description='Last updated timestamp')
 })
 
 @ns.route('/')
 class AmenityList(Resource):
     @ns.doc('list_amenities')
-    @ns.marshal_list_with(amenity_response_model)
+    @ns.marshal_list_with(amenity_model)
     def get(self):
-        '''List all amenities'''
+        """List all amenities"""
+        amenities = Amenity.query.all()
         return amenities, 200
 
     @ns.doc('create_amenity')
     @ns.expect(amenity_model)
-    @ns.marshal_with(amenity_response_model, code=201)
+    @ns.response(201, 'Amenity created successfully')
+    @ns.response(400, 'Invalid input')
+    @ns.response(409, 'Amenity already exists')
     def post(self):
-        '''Create a new amenity'''
-        global amenity_counter
+        """Create a new amenity"""
         data = request.json
-        if any(a['name'] == data['name'] for a in amenities):
-            api.abort(409, "Amenity with this name already exists")
-        new_amenity = {
-            'id': amenity_counter,
-            'name': data['name'],
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
-        }
-        amenities.append(new_amenity)
-        amenity_counter += 1
-        return new_amenity, 201
+        if 'name' not in data or not data['name'].strip():
+            return {'message': 'Amenity name is required and cannot be empty'}, 400
 
-@ns.route('/<int:id>')
+        if Amenity.query.filter_by(name=data['name']).first():
+            return {'message': 'Amenity already exists'}, 409
+
+        new_amenity = Amenity(name=data['name'])
+        db.session.add(new_amenity)
+        db.session.commit()
+        return {'message': 'Amenity created successfully'}, 201
+
+@ns.route('/<int:amenity_id>')
 @ns.response(404, 'Amenity not found')
-class Amenity(Resource):
+class AmenityResource(Resource):
     @ns.doc('get_amenity')
-    @ns.marshal_with(amenity_response_model)
-    def get(self, id):
-        '''Fetch a single amenity'''
-        amenity = next((a for a in amenities if a['id'] == id), None)
-        if amenity is None:
-            api.abort(404, "Amenity not found")
+    @ns.marshal_with(amenity_model)
+    def get(self, amenity_id):
+        """Fetch an amenity given its identifier"""
+        amenity = Amenity.query.get_or_404(amenity_id)
         return amenity, 200
 
     @ns.doc('update_amenity')
     @ns.expect(amenity_model)
-    @ns.marshal_with(amenity_response_model)
-    def put(self, id):
-        '''Update an existing amenity'''
-        amenity = next((a for a in amenities if a['id'] == id), None)
-        if amenity is None:
-            api.abort(404, "Amenity not found")
+    @ns.response(200, 'Amenity updated successfully')
+    @ns.response(400, 'Invalid input')
+    @ns.response(404, 'Amenity not found')
+    @ns.response(409, 'Amenity already exists')
+    def put(self, amenity_id):
+        """Update an existing amenity"""
         data = request.json
-        if any(a['name'] == data['name'] and a['id'] != id for a in amenities):
-            api.abort(409, "Amenity with this name already exists")
-        amenity['name'] = data['name']
-        amenity['updated_at'] = datetime.utcnow()
-        return amenity, 200
+        if 'name' not in data or not data['name'].strip():
+            return {'message': 'Amenity name is required and cannot be empty'}, 400
+
+        amenity = Amenity.query.get_or_404(amenity_id)
+
+        if Amenity.query.filter(Amenity.name == data['name'], Amenity.id != amenity_id).first():
+            return {'message': 'Amenity already exists'}, 409
+
+        amenity.name = data['name']
+        db.session.commit()
+        return {'message': 'Amenity updated successfully'}, 200
 
     @ns.doc('delete_amenity')
-    @ns.response(204, 'Amenity deleted')
-    def delete(self, id):
-        '''Delete an amenity'''
-        global amenities
-        amenities = [a for a in amenities if a['id'] != id]
+    @ns.response(204, 'Amenity deleted successfully')
+    @ns.response(404, 'Amenity not found')
+    def delete(self, amenity_id):
+        """Delete an amenity given its identifier"""
+        amenity = Amenity.query.get_or_404(amenity_id)
+        db.session.delete(amenity)
+        db.session.commit()
         return '', 204
-
-if __name__ == '__main__':
-    app.run(debug=True)
