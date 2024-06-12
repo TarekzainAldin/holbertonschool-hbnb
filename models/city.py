@@ -29,13 +29,13 @@ class City(BaseModel):
         """Get all places in the city"""
         return self.places
     def to_json(self):
-        return {
-            "id": self.id,
+        return return {
+            "id": str(self.id),
             "name": self.name,
-            "country_id": self.country_id,
+            "country_id": str(self.country_id),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "places": self.places
+            "places": [str(place.id) for place in self.places]
         }
 
     @classmethod
