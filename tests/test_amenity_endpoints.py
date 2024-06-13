@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from myapp import app, db, Amenity  # Assuming the application and models are in `myapp.py`
+from myapp import app, db, Amenity
 
 class AmenityTestCase(unittest.TestCase):
     def setUp(self):
