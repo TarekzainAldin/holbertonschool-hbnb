@@ -1,46 +1,60 @@
 import unittest
+from unittest.mock import patch, MagicMock
+from myapp import app, db, Amenity  # Assuming the application and models are in `myapp.py`
 
 class AmenityTestCase(unittest.TestCase):
     def setUp(self):
         self.app = app.test_client()
         self.app.testing = True
-        db.create_all()
 
     def tearDown(self):
-        db.session.remove()
-        db.drop_all()
+        pass
 
-    def test_create_amenity(self):
+    @patch('myapp.db.session.add')
+    @patch('myapp.db.session.commit')
+    def test_create_amenity(self, mock_commit, mock_add):
         response = self.app.post('/amenities/', json={'name': 'Pool'})
         self.assertEqual(response.status_code, 201)
+        mock_add.assert_called_once()
+        mock_commit.assert_called_once()
 
-    def test_get_amenity(self):
-        amenity = Amenity(name='Wi-Fi')
-        db.session.add(amenity)
-        db.session.commit()
+    @patch('myapp.Amenity.query.get')
+    def test_get_amenity(self, mock_get):
+        mock_amenity = MagicMock()
+        mock_amenity.id = 1
+        mock_amenity.name = 'Wi-Fi'
+        mock_get.return_value = mock_amenity
 
-        response = self.app.get(f'/amenities/{amenity.id}')
+        response = self.app.get(f'/amenities/1')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json['name'], 'Wi-Fi')
 
-    def test_update_amenity(self):
-        amenity = Amenity(name='Gym')
-        db.session.add(amenity)
-        db.session.commit()
+    @patch('myapp.db.session.commit')
+    @patch('myapp.Amenity.query.get')
+    def test_update_amenity(self, mock_get, mock_commit):
+        mock_amenity = MagicMock()
+        mock_amenity.id = 1
+        mock_amenity.name = 'Gym'
+        mock_get.return_value = mock_amenity
 
-        response = self.app.put(f'/amenities/{amenity.id}', json={'name': 'Fitness Center'})
+        response = self.app.put(f'/amenities/1', json={'name': 'Fitness Center'})
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(mock_amenity.name, 'Fitness Center')
+        mock_commit.assert_called_once()
 
-        updated_amenity = Amenity.query.get(amenity.id)
-        self.assertEqual(updated_amenity.name, 'Fitness Center')
+    @patch('myapp.db.session.commit')
+    @patch('myapp.db.session.delete')
+    @patch('myapp.Amenity.query.get')
+    def test_delete_amenity(self, mock_get, mock_delete, mock_commit):
+        mock_amenity = MagicMock()
+        mock_amenity.id = 1
+        mock_amenity.name = 'Spa'
+        mock_get.return_value = mock_amenity
 
-    def test_delete_amenity(self):
-        amenity = Amenity(name='Spa')
-        db.session.add(amenity)
-        db.session.commit()
-
-        response = self.app.delete(f'/amenities/{amenity.id}')
+        response = self.app.delete(f'/amenities/1')
         self.assertEqual(response.status_code, 204)
+        mock_delete.assert_called_once_with(mock_amenity)
+        mock_commit.assert_called_once()
 
 if __name__ == '__main__':
     unittest.main()
