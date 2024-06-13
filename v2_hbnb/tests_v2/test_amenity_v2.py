@@ -1,7 +1,7 @@
 # tests/test_amenity.py
 import unittest
 from datetime import datetime
-from models.amenitites import Amenity
+from models.amenity import Amenity
 
 class TestAmenity(unittest.TestCase):
     def test_amenity_creation(self):

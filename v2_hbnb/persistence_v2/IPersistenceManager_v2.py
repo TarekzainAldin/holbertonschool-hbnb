@@ -15,4 +15,4 @@ class IPersistenceManager(ABC):
         pass
     @abstractmethod
     def delete(self, entity_id,entyty_type):
-        pass 
+        pass

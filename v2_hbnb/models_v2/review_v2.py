@@ -1,23 +1,26 @@
+#!/usr/bin/python3
+# Model for representing reviews.
+
 from datetime import datetime
-from.base_model import BaseModel
 
-
-class Review(BaseModel):
+class Review:
     def __init__(self, review_id, user_id, place_id, rating, comment):
         self.review_id = review_id
         self.user_id = user_id
         self.place_id = place_id
         self.rating = rating
         self.comment = comment
-        # Adding the instance to the class attribute list
-        Review._reviews.append(self)
+        self.created_at = datetime.now()  # Record creation timestamp
+        self.updated_at = datetime.now()
 
-    @classmethod
-    def calculate_average_rating(cls) -> float:
-        """
-        Calculates and returns the average rating of all reviews.
-        """
-        if not cls._reviews:
-            return 0.0
-        total_rating = sum(review.rating for review in cls._reviews)
-        return total_rating / len(cls._reviews)
+    def to_dict(self):
+        """Returns the review data as a dictionary."""
+        return {
+            'review_id': self.review_id,
+            'user_id': self.user_id,
+            'place_id': self.place_id,
+            'rating': self.rating,
+            'comment': self.comment,
+            'created_at': self.created_at.isoformat(),  # Convert datetime to ISO 8601 format
+            'updated_at': self.updated_at.isoformat()  # Convert datetime to ISO 8601 format
+        }

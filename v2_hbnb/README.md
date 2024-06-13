@@ -1,1 +1,1 @@
-this is the version V2 of the project Hbnb.
+HBnB Evolution: Part 1 (Model + API)

@@ -20,7 +20,10 @@ class User:
         return f"User(email='{self.email}', first_name='{self.first_name}', last_name='{self.last_name}')"
     def to_dict(self):
         return {
+            'id': getattr(self, 'id', None),
             'email': self.email,
             'first_name': self.first_name,
-            'last_name': self.last_name
+            'last_name': self.last_name,
+            'created_at': self.created_at,
+            'updated_at': self.updated_at
         }
