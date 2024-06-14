@@ -1,5 +1,5 @@
 from models.city import City
-from persistence.city_data_manager import CityDataManager
+from persistence_v2.city_data_manager import CityDataManager
 import unittest
 
 class TestCityDataManager(unittest.TestCase):

@@ -1,6 +1,6 @@
 import unittest
 from datetime import datetime
-from models.user import User
+from models_v2.user_v2 import User
 from persistence.data_manager import DataManager
 
 class TestDataPersistence(unittest.TestCase):
